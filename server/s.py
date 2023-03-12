@@ -32,16 +32,25 @@ def parseInput(data, con):
     print("parsing...")
     print(str(data))
     
+    #hello command
     # Checking for commands 
     if "<hello>" in data:
         print("command in data..")
         con.send(str("we got the hello").encode())
 
-    elif "<getfile-britney.mp3>" in data:
+    #getFile command, reads in and sends the bytes
+    elif "<getfile" in data:
         print('got britney request...again....')
 
+        #cleaning
+        parts = data.split('-') #split on the dash
+
+        #only gradb last filename
+        filename = parts[1] #turn into an array
+        filename = filename[:-3] #remove last 3 chars
+
         #read bytes for britney file
-        with open('britney.mp3' , 'rb') as f:
+        with open(filename , 'rb') as f:
             fileContent = f.read()
             print(fileContent)
 
@@ -49,8 +58,18 @@ def parseInput(data, con):
             con.send(fileContent)
             f.close()
 
-    elif "<split>" in data:
-        with open("britney.mp3", mode="rb") as file:
+
+    #splits command, breaks file up into 2 seperate files
+    elif "<split" in data:
+
+        #cleaning
+        parts = data.split('-') #split on the dash
+
+        #only gradb last filename
+        filename = parts[1] #turn into an array
+        filename = filename[:-3] #remove last 3 chars
+
+        with open(filename, mode="rb") as file:
             contents = file.read()
 
             chunkSize = 1000*500
@@ -62,14 +81,22 @@ def parseInput(data, con):
             f.close()
 
 
+    #delete command, removes both mp3 files
     elif "<delete" in data:
-        print("hello")
+        print("delete" + filename)
+
+        #cleaning
+        parts = data.split('-') #split on the dash
+
+        #only gradb last filename
+        filename = parts[1] #turn into an array
+        filename = filename[:-3] #remove last 3 chars
+
         import os
-        os.remove('1.mp3')
-        os.remove('2.mp3')
+        os.remove(filename)
 
 
-
+    #hash command, reads the filename after the hash part and hashes it
     elif "<hash" in data:
         import hashlib
 
@@ -89,6 +116,32 @@ def parseInput(data, con):
         m.update(content)
         res = m.digest()
         print(res)
+
+
+    #list all items in directory
+    elif "<list>" in data:
+        import os
+
+
+
+        print("list files")
+        path = "." #path to home dir
+        dir_list: list = os.listdir(path) #create a list of all items in directory
+
+        print("Files and directories in '", path, "' :")
+
+        newList = []
+
+        #copy items with substring .mp3 to new list
+        for i, filename in enumerate(dir_list):
+        
+            if ".mp3" in filename:
+                newList.append(filename)
+
+        print(newList)
+            
+
+        con.send(str(newList).encode())#send newList to client
         
     
 # we a new thread is started from an incoming connection
